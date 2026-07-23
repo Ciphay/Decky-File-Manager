@@ -1,17 +1,11 @@
-lib-cov
-*.seed
+node_modules/
+dist/
+*.zip
+*.bak
 *.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-*.swp
-
-pids
-logs
-results
-tmp
+__pycache__/
+.vscode/
+tmp_*
 
 # Coverage reports
 coverage
@@ -57,3 +51,8 @@ out/*
 cli/
 cli/*
 cli/decky
+
+# Ignore local build artifacts and temporary files
+*.zip
+*.bak
+tmp_decky_ui_dts_files.txt
