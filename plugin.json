@@ -3,10 +3,14 @@
   "author": "Ciphay",
   "flags": [],
   "api_version": 2,
+    "file_manager": {
+    "enabled": true,
+    "as_default": true,
+    "for_gamescope": true
+  },
   "publish": {
     "tags": ["file-manager"],
-    "description": "Gerenciador de arquivos do Decky",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "description": ""
   }
   ,
   "translations_base_url": ""

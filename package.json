@@ -1,11 +1,11 @@
 {
-  "name": "steamos-file-manager",
-  "version": "1.0.0",
-  "description": "Gerenciador de arquivos para do Decky",
+  "name": "Decky Manager",
+  "version": "2.0.0",
+  "description": "Better features for Decky",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
-    "package": "pnpm run build && rm -f steamos-file-manager.zip && rm -rf .tmp/steamos-file-manager && mkdir -p .tmp/steamos-file-manager && cp -r dist locales package.json plugin.json main.py README.md LICENSE .tmp/steamos-file-manager && cd .tmp && zip -r ../steamos-file-manager.zip steamos-file-manager && cd .. && rm -rf .tmp && echo 'steamos-file-manager.zip criado com sucesso.'",
+    "package": "pnpm run build && rm -f Decky-Manager.zip && rm -rf .tmp/Decky-Manager && mkdir -p .tmp/Decky-Manager && cp -r dist locales backend package.json plugin.json main.py LICENSE .tmp/Decky-Manager && cd .tmp && zip -r ../Decky-Manager.zip Decky-Manager && cd .. && rm -rf .tmp && echo 'Decky-Manager.zip criado com sucesso.'",
     "watch": "rollup -c -w",
     "auto-package": "pnpm run build && chokidar \"src/**\" -c 'pnpm run package'",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,9 +20,9 @@
   "author": "Ciphay",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/SteamDeckHomebrew/decky-plugin-template/issues"
+    "url": "https://github.com/Ciphay/Decky-File-Manager/issues"
   },
-  "homepage": "https://github.com/SteamDeckHomebrew/decky-plugin-template#readme",
+  "homepage": "https://github.com/Ciphay/Decky-File-Manager",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
     "@decky/ui": "^4.11.0",
