@@ -61,7 +61,7 @@ export default function DriveChip({ name, path, free, mounted = true, onSelect }
               ? (free !== null && free !== undefined
                 ? t("drive.free_space").replace("{value}", formatBytes(free))
                 : t("drive.free_space_available"))
-              : "não montado"}
+              : t("drive.not_mounted")}
           </span>
         </div>
       </DialogButton>
