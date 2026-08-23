@@ -2094,25 +2094,11 @@ function FileManagerPage() {
   }, [exitPlugin, isSelectionMode, openAddGameModal, resolveSelectionTarget, setError]);
 
   const shouldSuppressGoBack = useCallback(() => {
-    const pluginScope = fileManagerScopeRef.current ?? backgroundFileManagerRef.current;
-    const outsidePluginOverlaySelector = "#QuickAccess-Menu, #QuickAccess-NA, #Menu, #MainMenu, #SteamMenu, [id^='QuickAccess-'], [id^='QuickAccess_'], [id^='quickaccess_'], [id^='quickaccess_tab_'], [id^='quickaccess_content_'], [id*='MainMenu'], [id*='SteamMenu'], [data-steam-menu], [data-steam-overlay], .contextMenu, .contextMenuContents, .BasicContextMenuModal, [role='menu'], [role='dialog'], [data-decky-modal], [aria-expanded='true'][aria-haspopup]";
-
     if (typeof document === "undefined") {
       return false;
     }
 
-    const activeElement = document.activeElement as HTMLElement | null;
-    const overlayVisibleOutsidePlugin = Array.from(document.querySelectorAll<HTMLElement>(outsidePluginOverlaySelector)).some((overlay) => {
-      if (!isElementActuallyVisible(overlay)) return false;
-      if (!pluginScope) return true;
-      return !pluginScope.contains(overlay) && !overlay.closest("[data-file-manager-scope]") && !overlay.closest("[data-file-manager-background]");
-    });
-
-    const steamQuickAccessOpen = isSteamQuickAccessMenuOpenInDom();
-    const steamMainMenuOpen = isSteamMainMenuOpenInDom();
-    const overlayOrKeyboardActive = Boolean(activeElement?.closest(getOverlaySelector())) || isAnyModalOrMenuOpen();
-
-    return overlayVisibleOutsidePlugin || steamQuickAccessOpen || steamMainMenuOpen || isQuickAccessVisible || overlayOrKeyboardActive;
+    return isSteamQuickAccessMenuOpenInDom() || isSteamMainMenuOpenInDom() || isQuickAccessVisible;
   }, [isAnyModalOrMenuOpen, isQuickAccessVisible]);
 
   const handleFooterTriangle = useCallback(() => {
