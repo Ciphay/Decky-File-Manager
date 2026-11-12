@@ -5,8 +5,10 @@ __pycache__/
 .vscode/
 *~
 *.log
-*.tmpnode_modules/
+*.tmp
+node_modules/
 dist/
 *.zip
 .tmp/
 coverage/
+tests/
