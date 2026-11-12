@@ -92,3 +92,5 @@ export const unmountDrive = callable<[string, string | null], DriveResult>("unmo
 export const renameDrive = callable<[string, string, string | null], DriveResult>("rename_drive");
 export const getGameInstallDir = callable<[number, string | null], { success: boolean; path?: string; error?: string }>("get_game_install_dir");
 export const getScreenshotsDir = callable<[number], { success: boolean; path?: string; error?: string }>("get_screenshots_dir");
+
+export const isGamescopeSession = callable<[], { gamescope: boolean }>("is_gamescope_session");

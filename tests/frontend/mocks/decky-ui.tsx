@@ -54,6 +54,7 @@ export const findInReactTree = vi.fn((node: any, filter: (x: any) => boolean): a
   return walk(node);
 });
 export const findInTree = vi.fn((tree: any, filter: (x: any) => boolean, _opts?: any) => findInReactTree(tree, filter));
+export const findModule = vi.fn((_filter: any): any => undefined);
 export const findModuleByExport = vi.fn((_filter: any): any => undefined);
 export const fakeRenderComponent = vi.fn((_fn: any): any => undefined);
 export const afterPatch = vi.fn((_object: any, _property: string, _handler: any) => ({ unpatch: vi.fn() }));

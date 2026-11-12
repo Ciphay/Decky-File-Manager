@@ -23,6 +23,8 @@
   "drive.read_only": "只读",
   "drive.not_mounted": "未挂载",
   "drive.encrypted": "已加密",
+  "steam.browse_folder": "浏览文件夹",
+  "steam.show_on_disk": "在磁盘上显示",
   "drive.unlock.title": "解锁驱动器",
   "drive.unlock.message": "请输入 {name} 的密码。",
   "drive.passphrase.wrong": "密码错误，请重试。",

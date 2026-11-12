@@ -9,6 +9,8 @@ import { startBackgroundPolling } from "./backgroundPolling";
 import { PICK_ROUTE, installFileDialogHook } from "./fileDialog/fileDialogHook";
 import PickRoute from "./fileDialog/PickRoute";
 import { installExplorerHooks } from "./fileDialog/explorerHooks";
+import { isGamescopeSession } from "./api";
+import { installFolderMenus } from "./steamMenus/folderMenus";
 
 const ROUTES: Array<[string, ComponentType]> = [
   ["/steam-os-file-manager", FileManagerPage],
@@ -24,6 +26,13 @@ export default definePlugin(() => {
   const stopPolling = startBackgroundPolling();
   const restoreFileDialog = installFileDialogHook();
   const restoreExplorer = installExplorerHooks();
+  let restoreFolderMenus: () => void = () => undefined;
+  let dismounted = false;
+  isGamescopeSession()
+    .then((session) => {
+      if (session?.gamescope && !dismounted) restoreFolderMenus = installFolderMenus();
+    })
+    .catch(() => undefined);
 
   return {
     name: "Decky File Manager",
@@ -33,6 +42,8 @@ export default definePlugin(() => {
       stopPolling();
       restoreFileDialog();
       restoreExplorer();
+      dismounted = true;
+      restoreFolderMenus();
       unpatchLibraryContextMenu();
       ROUTES.forEach(([path]) => routerHook.removeRoute(path));
     },

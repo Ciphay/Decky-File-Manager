@@ -23,6 +23,8 @@
   "drive.read_only": "Somente leitura",
   "drive.not_mounted": "Não montado",
   "drive.encrypted": "Criptografado",
+  "steam.browse_folder": "Explorar pasta",
+  "steam.show_on_disk": "Exibir em disco",
   "drive.unlock.title": "Desbloquear unidade",
   "drive.unlock.message": "Digite a senha de {name}.",
   "drive.passphrase.wrong": "Senha incorreta, tente novamente.",

@@ -23,6 +23,8 @@
   "drive.read_only": "Read-only",
   "drive.not_mounted": "Not mounted",
   "drive.encrypted": "Encrypted",
+  "steam.browse_folder": "Browse folder",
+  "steam.show_on_disk": "Show on disk",
   "drive.unlock.title": "Unlock drive",
   "drive.unlock.message": "Enter the passphrase for {name}.",
   "drive.passphrase.wrong": "Wrong passphrase, try again.",

@@ -23,6 +23,8 @@
   "drive.read_only": "Lecture seule",
   "drive.not_mounted": "Non monté",
   "drive.encrypted": "Chiffré",
+  "steam.browse_folder": "Parcourir le dossier",
+  "steam.show_on_disk": "Afficher sur le disque",
   "drive.unlock.title": "Déverrouiller le disque",
   "drive.unlock.message": "Saisissez la phrase secrète de {name}.",
   "drive.passphrase.wrong": "Phrase secrète incorrecte, réessayez.",

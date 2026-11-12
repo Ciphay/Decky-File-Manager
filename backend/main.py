@@ -8,9 +8,10 @@ import decky
 from .drive_actions import DriveActions
 from .drives import Drives
 from .lifecycle import Lifecycle
+from .session import Session
 
 
-class Plugin(Lifecycle, Drives, DriveActions):
+class Plugin(Lifecycle, Drives, DriveActions, Session):
 
     def __init__(self):
         self._clipboard_path: str | None = None

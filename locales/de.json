@@ -23,6 +23,8 @@
   "drive.read_only": "Schreibgeschützt",
   "drive.not_mounted": "Nicht eingebunden",
   "drive.encrypted": "Verschlüsselt",
+  "steam.browse_folder": "Ordner durchsuchen",
+  "steam.show_on_disk": "Auf Datenträger anzeigen",
   "drive.unlock.title": "Laufwerk entsperren",
   "drive.unlock.message": "Passphrase für {name} eingeben.",
   "drive.passphrase.wrong": "Falsche Passphrase, bitte erneut versuchen.",
