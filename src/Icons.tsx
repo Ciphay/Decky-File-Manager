@@ -143,14 +143,6 @@ export function StopIcon() {
   );
 }
 
-export function CloseIcon() {
-  return (
-    <SvgIcon viewBox="0 0 16 16">
-      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708Z" />
-    </SvgIcon>
-  );
-}
-
 export function PropertiesIcon() {
   return (
     <BaseIcon>
@@ -167,11 +159,45 @@ export function PluginIcon() {
   );
 }
 
-export function ArrowUpCircleIcon() {
+const DRIVE_ICON_SIZE = 26;
+
+function DriveSvg({ children }: { children: ReactNode }) {
   return (
-    <BaseIcon>
-      <path d="M12 2.25a.75.75 0 0 1 .53.22l4.5 4.5a.75.75 0 1 1-1.06 1.06L12.75 5.06v10.69a.75.75 0 0 1-1.5 0V5.06l-3.22 3.22a.75.75 0 1 1-1.06-1.06l4.5-4.5A.75.75 0 0 1 12 2.25Z" />
-    </BaseIcon>
+    <svg width={DRIVE_ICON_SIZE} height={DRIVE_ICON_SIZE} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      {children}
+    </svg>
+  );
+}
+
+export function HardDriveIcon() {
+  return (
+    <DriveSvg>
+      <path fillRule="evenodd" d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm12.5 6a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM6.5 14.2v1.6h5v-1.6z" />
+    </DriveSvg>
+  );
+}
+
+export function UsbDriveIcon() {
+  return (
+    <DriveSvg>
+      <path fillRule="evenodd" d="M8 2h8a1 1 0 0 1 1 1v5H7V3a1 1 0 0 1 1-1zm-1 7h10v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2zm3 1.5v2h1.5v-2zm3.5 0v2H15v-2z" />
+    </DriveSvg>
+  );
+}
+
+export function SdCardIcon() {
+  return (
+    <DriveSvg>
+      <path fillRule="evenodd" d="M8 2h7l4 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1.5 2.5v4H11v-4zm3 0v4H14v-4zm3 0v4H17v-4z" />
+    </DriveSvg>
+  );
+}
+
+export function HomeFolderIcon() {
+  return (
+    <DriveSvg>
+      <path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z" />
+    </DriveSvg>
   );
 }
 

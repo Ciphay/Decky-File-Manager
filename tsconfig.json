@@ -3,7 +3,7 @@
     "outDir": "dist",
     "module": "ESNext",
     "target": "ES2020",
-    "rootDir": "src",
+    "rootDir": ".",
     "jsx": "react-jsx",
     "declaration": false,
     "moduleResolution": "Bundler",
@@ -15,8 +15,9 @@
     "noImplicitAny": true,
     "strict": true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "include": ["src"],
+  "include": ["src", "locales", "plugin.json"],
   "exclude": ["node_modules"]
 }

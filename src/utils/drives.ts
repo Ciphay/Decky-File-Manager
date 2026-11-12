@@ -9,6 +9,10 @@ export type DriveInfo = {
   total?: number | null;
   free?: number | null;
   mounted?: boolean;
+  fstype?: string | null;
+  system?: boolean;
+  read_only?: boolean;
+  encrypted?: boolean;
 };
 
 export function getDriveDisplayName(drive: Pick<DriveInfo, "name" | "path">): string {

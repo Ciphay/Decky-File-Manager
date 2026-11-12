@@ -5,4 +5,8 @@ __pycache__/
 .vscode/
 *~
 *.log
-*.tmp
+*.tmpnode_modules/
+dist/
+*.zip
+.tmp/
+coverage/

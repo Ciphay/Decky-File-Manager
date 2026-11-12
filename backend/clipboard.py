@@ -1,6 +1,7 @@
 import os
 
 from .properties import Properties
+from .results import as_result
 
 
 class Clipboard(Properties):
@@ -9,32 +10,12 @@ class Clipboard(Properties):
         if not src_path:
             raise ValueError("Caminho inválido")
         src_path = os.path.abspath(src_path)
-        if not os.path.exists(src_path):
+        if not os.path.lexists(src_path):
             raise FileNotFoundError(f"Item não existe: {src_path}")
 
         self._clipboard_path = src_path
         self._clipboard_kind = kind
         self._save_runtime_state()
-
-    def _copy_path(self, src_path: str, dst_path: str) -> None:
-        import shutil
-        
-        if os.path.isdir(src_path):
-            shutil.copytree(src_path, dst_path, dirs_exist_ok=False)
-        else:
-            shutil.copy2(src_path, dst_path)
-
-    def _move_path(self, src_path: str, dst_path: str) -> None:
-        import shutil
-        import errno
-        
-        try:
-            os.rename(src_path, dst_path)
-        except OSError as e:
-            if getattr(e, 'errno', None) == errno.EXDEV:
-                shutil.move(src_path, dst_path)
-            else:
-                raise
 
     def _clear_clipboard(self) -> None:
         self._clipboard_path = None
@@ -50,6 +31,8 @@ class Clipboard(Properties):
         return {"ok": True}
 
     async def has_clipboard(self) -> dict:
+        if self._clipboard_path and not os.path.lexists(self._clipboard_path):
+            self._clear_clipboard()
         return {"has": bool(self._clipboard_path)}
 
     async def get_clipboard_kind(self) -> dict:
@@ -65,100 +48,123 @@ class Clipboard(Properties):
     async def get_clipboard_info(self) -> dict:
         return await self.copy_or_cut_status()
 
+    def _clipboard_or_raise(self) -> tuple[str, str]:
+        if not self._clipboard_path or not self._clipboard_kind:
+            raise ValueError("Área de transferência está vazia")
+        if not os.path.lexists(self._clipboard_path):
+            self._clear_clipboard()
+            raise FileNotFoundError("O item copiado não existe mais")
+        return self._clipboard_path, self._clipboard_kind
+
+    def _paste_block_reason(self, src: str, kind: str, target_dir: str) -> str | None:
+        if not self._is_safe_target_for_path(target_dir, src):
+            return "self-directory"
+        if kind == "cut" and self._is_self_or_subdirectory(target_dir, src):
+            return "self-directory"
+        if kind == "cut" and os.path.realpath(os.path.dirname(src)) == os.path.realpath(target_dir):
+            return "same-directory"
+        return None
+
     async def check_paste_conflict(self, target_dir: str) -> dict:
         target_dir = self._normalize_dir(target_dir)
         self._validate_exists_dir(target_dir)
-
-        if not self._clipboard_path or not self._clipboard_kind:
-            raise ValueError("Área de transferência está vazia")
-
-        src = self._clipboard_path
-        kind = self._clipboard_kind
+        src, kind = self._clipboard_or_raise()
         name = os.path.basename(src)
 
-        if kind == "cut" and self._is_self_or_subdirectory(target_dir, src):
-            return {"blocked": True, "reason": "self-directory", "name": name}
+        reason = self._paste_block_reason(src, kind, target_dir)
+        if reason:
+            return {"blocked": True, "reason": reason, "name": name}
 
         raw_dst = os.path.join(target_dir, name)
-        if os.path.exists(raw_dst):
+        if os.path.lexists(raw_dst):
             return {
                 "blocked": False,
                 "needs_conflict": True,
                 "path": raw_dst,
                 "name": name,
-                "is_dir": os.path.isdir(raw_dst),
+                "is_dir": os.path.isdir(raw_dst) and not os.path.islink(raw_dst),
             }
-
         return {"blocked": False, "needs_conflict": False, "path": raw_dst, "name": name}
 
     async def paste_path(self, target_dir: str) -> dict:
         return await self.paste_path_with_options(target_dir, "keep-both")
 
+    def _resolve_paste_destination(self, src: str, kind: str, raw_dst: str, strategy: str) -> tuple[str | None, dict | None]:
+        if not os.path.lexists(raw_dst):
+            return raw_dst, None
+        if strategy == "ignore":
+            return None, {"ok": True, "skipped": True}
+        if strategy == "cancel":
+            return None, {"ok": True, "cancelled": True}
+        if self._real_item_path(raw_dst) == self._real_item_path(src):
+            return None, {"ok": True, "skipped": True}
+        if kind == "cut" and self._is_subpath(src, raw_dst):
+            raise ValueError("Não é possível substituir uma pasta que contém o item movido")
+
+        if strategy == "replace":
+            return raw_dst, None
+        if strategy == "keep-both":
+            return self._unique_target_path(raw_dst), None
+        if strategy == "merge":
+            if not (os.path.isdir(src) and os.path.isdir(raw_dst)) or os.path.islink(src) or os.path.islink(raw_dst):
+                raise ValueError("Só é possível mesclar pastas")
+            return raw_dst, None
+        raise ValueError("Estratégia de conflito inválida")
+
+    @as_result
     async def paste_path_with_options(self, target_dir: str, conflict_strategy: str = "keep-both", apply_to_all: bool = False, paste_label: str = "Copying", move_label: str = "Moving", operation_id: str | None = None) -> dict:
-        import shutil
-        import asyncio
-        
         target_dir = self._normalize_dir(target_dir)
         self._validate_exists_dir(target_dir)
+        src, kind = self._clipboard_or_raise()
 
-        if not self._clipboard_path or not self._clipboard_kind:
-            raise ValueError("Área de transferência está vazia")
-
-        src = self._clipboard_path
-        kind = self._clipboard_kind
-        name = os.path.basename(src)
-        if not self._is_safe_target_for_path(target_dir, src):
+        if self._paste_block_reason(src, kind, target_dir):
             raise ValueError("Destino inválido")
 
-        if kind == "cut" and self._is_self_or_subdirectory(target_dir, src):
-            raise ValueError("Não é possível colar dentro do diretório.")
+        raw_dst = os.path.join(target_dir, os.path.basename(src))
+        dst, immediate = self._resolve_paste_destination(src, kind, raw_dst, conflict_strategy)
+        if immediate is not None or dst is None:
+            return immediate or {"ok": True, "skipped": True}
 
-        raw_dst = os.path.join(target_dir, name)
+        replacing = conflict_strategy == "replace" and os.path.lexists(raw_dst)
+        merging = conflict_strategy == "merge" and os.path.lexists(raw_dst)
 
-        if os.path.exists(raw_dst):
-            if conflict_strategy == "ignore":
-                return {"ok": True, "skipped": True}
-            if conflict_strategy == "cancel":
-                return {"ok": True, "cancelled": True}
-            if conflict_strategy == "replace" and os.path.realpath(raw_dst) == os.path.realpath(src):
-                self._clipboard_path = None
-                self._clipboard_kind = None
-                self._save_runtime_state()
-                return {"ok": True, "conflict_strategy": conflict_strategy}
-            if conflict_strategy == "replace":
-                self._remove_path(raw_dst)
-                dst = raw_dst
-            elif conflict_strategy == "keep-both":
-                dst = self._unique_target_path(raw_dst)
-            elif conflict_strategy == "merge":
-                dst = raw_dst
-            else:
-                raise ValueError("Estratégia de conflito inválida")
-        else:
-            dst = raw_dst
+        skipped: list[str] = []
 
+        def worker() -> None:
+            backup = self._stash_existing(raw_dst) if replacing else None
+            try:
+                if merging and kind == "cut":
+                    self._merge_move_with_progress(src, dst, operation_id)
+                elif merging:
+                    skipped.extend(self._copy_tree_with_progress(src, dst, "merge", operation_id, skip_unreadable=True))
+                elif kind == "copy" and os.path.isdir(src) and not os.path.islink(src):
+                    skipped.extend(self._copy_tree_with_progress(src, dst, "keep-both", operation_id, skip_unreadable=True))
+                elif kind == "copy":
+                    self._copy_file_with_progress(src, dst, operation_id=operation_id)
+                else:
+                    self._move_path_with_progress(src, dst, operation_id)
+            except BaseException:
+                if backup:
+                    self._restore_stash(backup, dst)
+                raise
+            if backup:
+                try:
+                    self._remove_path(backup)
+                except OSError:
+                    pass
+
+        label = paste_label if kind == "copy" else move_label
         try:
-            if conflict_strategy == "merge" and os.path.isdir(src) and os.path.isdir(dst):
-                if kind == "copy":
-                    shutil.copytree(src, dst, dirs_exist_ok=True)
-                elif kind == "cut":
-                    shutil.copytree(src, dst, dirs_exist_ok=True)
-                    shutil.rmtree(src)
-                else:
-                    raise ValueError("Clipboard inválida")
-            elif kind == "copy":
-                refresh_target = os.path.dirname(dst) or target_dir
-                if os.path.isdir(src):
-                    await self._run_with_progress(paste_label, lambda: self._copy_tree_with_progress(src, dst, conflict_strategy, apply_to_all, operation_id), operation_id, refresh_target)
-                else:
-                    await self._run_with_progress(paste_label, lambda: self._copy_file_with_progress(src, dst, operation_id=operation_id), operation_id, refresh_target)
-            elif kind == "cut":
-                refresh_target = os.path.dirname(dst) or target_dir
-                await self._run_with_progress(move_label, lambda: self._move_path_with_progress(src, dst, operation_id), operation_id, refresh_target)
-            else:
-                raise ValueError("Clipboard inválida")
+            await self._run_with_progress(label, worker, operation_id, target_dir)
         except PermissionError as e:
             raise PermissionError(f"Sem permissão: {e}") from e
 
         self._clear_clipboard()
-        return {"ok": True, "conflict_strategy": conflict_strategy}
+        return {
+            "ok": True,
+            "success": True,
+            "new_path": dst,
+            "conflict_strategy": conflict_strategy,
+            "skipped_count": len(skipped),
+            "skipped_items": [os.path.basename(item) for item in skipped[:5]],
+        }

@@ -21,10 +21,10 @@ export function isTextInputElement(element: HTMLElement | null): boolean {
     return true;
   }
 
-  return element.isContentEditable;
+  return Boolean(element.isContentEditable);
 }
 
-export const OVERLAY_SELECTORS = [
+export const QUICK_ACCESS_SELECTORS = [
   "#QuickAccess-Menu",
   "#QuickAccess-NA",
   "[id^='QuickAccess-']",
@@ -32,10 +32,28 @@ export const OVERLAY_SELECTORS = [
   "[id^='quickaccess_']",
   "[id^='quickaccess_tab_']",
   "[id^='quickaccess_content_']",
+];
+
+export const CONTEXT_MENU_SELECTORS = [
   ".contextMenu",
   ".contextMenuContents",
   ".BasicContextMenuModal",
   "[role='menu']",
+];
+
+export const STEAM_MAIN_MENU_SELECTORS = [
+  "#Menu",
+  "#MainMenu",
+  "#SteamMenu",
+  "[id*='MainMenu']",
+  "[id*='SteamMenu']",
+  "[data-steam-menu]",
+  "[data-steam-overlay]",
+];
+
+export const OVERLAY_SELECTORS = [
+  ...QUICK_ACCESS_SELECTORS,
+  ...CONTEXT_MENU_SELECTORS,
   "[role='dialog']",
   "[data-modal-root]",
   "[data-decky-modal]",
@@ -43,19 +61,7 @@ export const OVERLAY_SELECTORS = [
   "[aria-haspopup]",
 ];
 
-export const MENU_OVERLAY_SELECTOR = [
-  "#QuickAccess-Menu",
-  "#QuickAccess-NA",
-  "[id^='QuickAccess-']",
-  "[id^='QuickAccess_']",
-  "[id^='quickaccess_']",
-  "[id^='quickaccess_tab_']",
-  "[id^='quickaccess_content_']",
-  ".contextMenu",
-  ".contextMenuContents",
-  ".BasicContextMenuModal",
-  "[role='menu']",
-].join(", ");
+export const MENU_OVERLAY_SELECTOR = [...QUICK_ACCESS_SELECTORS, ...CONTEXT_MENU_SELECTORS].join(", ");
 
 export function getOverlaySelector(): string {
   return OVERLAY_SELECTORS.join(", ");
@@ -97,7 +103,7 @@ export function safeSetAttribute(element: HTMLElement | null | undefined, name: 
   }
 }
 
-export function ModalFocusScope({ children }: { children: ReactNode }) {
+export function ModalFocusScope({ children, preferControls = false }: { children: ReactNode; preferControls?: boolean }) {
   const scopeRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -191,12 +197,9 @@ export function ModalFocusScope({ children }: { children: ReactNode }) {
       }
     };
 
-    const focusables = getFocusableElements(scope);
-    if (focusables.length > 0) {
-      safeFocus(focusables[0]);
-    } else {
-      safeFocus(scope);
-    }
+    const initial = getFocusableElements(scope);
+    const first = (preferControls ? initial.find((element) => !isTextInputElement(element)) : undefined) ?? initial[0];
+    safeFocus(first ?? scope);
 
     document.addEventListener("keydown", trapFocus, true);
     document.addEventListener("focusin", keepFocusInside, true);
@@ -227,30 +230,34 @@ export function isElementActuallyVisible(element: HTMLElement | null): boolean {
   return rect.width > 0 || rect.height > 0 || element.childElementCount > 0;
 }
 
+function getSteamWindowCandidates(): Window[] {
+  const discovered = new Set<Window>();
+  const add = (candidate: Window | null | undefined) => {
+    if (candidate) discovered.add(candidate);
+  };
+
+  if (typeof window !== "undefined") {
+    add(window);
+    add(window.parent);
+    add(window.top);
+    add((window as any).SteamUIStore?.GetFocusedWindowInstance?.()?.BrowserWindow ?? null);
+  }
+
+  return Array.from(discovered);
+}
+
+const getNavigationTrees = (win: Window): any[] =>
+  (win as any)?.GamepadNavTree?.m_context?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
+  (win as any)?.FocusNavController?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
+  [];
+
 export function isSteamQuickAccessMenuOpenInDom(): boolean {
   const isQuickAccessWindowName = (value: string | null | undefined): boolean =>
     typeof value === "string" && /^QuickAccess(?:[-_]|$)/i.test(value);
 
-  const getSteamWindowCandidates = (): Window[] => {
-    const discovered = new Set<Window>();
-    const add = (candidate: Window | null | undefined) => {
-      if (!candidate || discovered.has(candidate)) return;
-      discovered.add(candidate);
-    };
-
-    add(typeof window !== "undefined" ? window : null);
-    add(typeof window !== "undefined" ? window.parent : null);
-    add(typeof window !== "undefined" ? window.top : null);
-    add(typeof window !== "undefined" ? ((window as any).SteamUIStore?.GetFocusedWindowInstance?.()?.BrowserWindow ?? null) : null);
-
-    return Array.from(discovered);
-  };
 
   for (const win of getSteamWindowCandidates()) {
-    const navTrees =
-      (win as any)?.GamepadNavTree?.m_context?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
-      (win as any)?.FocusNavController?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
-      [];
+    const navTrees = getNavigationTrees(win);
 
     const qamTree = navTrees.find((tree: any) => {
       const id = String(tree?.id ?? "");
@@ -278,15 +285,7 @@ export function isSteamQuickAccessMenuOpenInDom(): boolean {
     return false;
   }
 
-  const steamQuickAccessSelectors = [
-    "#QuickAccess-Menu",
-    "#QuickAccess-NA",
-    "[id^='QuickAccess-']",
-    "[id^='QuickAccess_']",
-    "[id^='quickaccess_']",
-    "[id^='quickaccess_tab_']",
-    "[id^='quickaccess_content_']",
-  ].join(", ");
+  const steamQuickAccessSelectors = QUICK_ACCESS_SELECTORS.join(", ");
 
   const overlay = Array.from(document.querySelectorAll<HTMLElement>(steamQuickAccessSelectors)).find((element) => isElementActuallyVisible(element));
   return !!overlay;
@@ -297,15 +296,7 @@ export function isSteamMainMenuOpenInDom(): boolean {
     return false;
   }
 
-  const steamMainMenuSelectors = [
-    "#Menu",
-    "#MainMenu",
-    "#SteamMenu",
-    "[id*='MainMenu']",
-    "[id*='SteamMenu']",
-    "[data-steam-menu]",
-    "[data-steam-overlay]",
-  ].join(", ");
+  const steamMainMenuSelectors = STEAM_MAIN_MENU_SELECTORS.join(", ");
 
   const menu = Array.from(document.querySelectorAll<HTMLElement>(steamMainMenuSelectors)).find((element) => {
     if (!isElementActuallyVisible(element)) {
@@ -323,26 +314,9 @@ export function isSteamMainMenuOpenInDom(): boolean {
     return true;
   }
 
-  const getSteamWindowCandidates = (): Window[] => {
-    const discovered = new Set<Window>();
-    const add = (candidate: Window | null | undefined) => {
-      if (!candidate || discovered.has(candidate)) return;
-      discovered.add(candidate);
-    };
-
-    add(typeof window !== "undefined" ? window : null);
-    add(typeof window !== "undefined" ? window.parent : null);
-    add(typeof window !== "undefined" ? window.top : null);
-    add(typeof window !== "undefined" ? ((window as any).SteamUIStore?.GetFocusedWindowInstance?.()?.BrowserWindow ?? null) : null);
-
-    return Array.from(discovered);
-  };
 
   for (const win of getSteamWindowCandidates()) {
-    const navTrees =
-      (win as any)?.GamepadNavTree?.m_context?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
-      (win as any)?.FocusNavController?.m_ActiveContext?.m_rgGamepadNavigationTrees ??
-      [];
+    const navTrees = getNavigationTrees(win);
 
     const steamMenuTree = navTrees.find((tree: any) => {
       const id = String(tree?.id ?? "").toLowerCase();
