@@ -90,34 +90,11 @@ pnpm run build      # rollup -c
 pnpm run package    # builds Decky-File-Manager.zip
 ```
 
-Source layout: `src/hooks` (state and actions), `src/components` (UI and modals), `src/menuPatch` (library context menu),
-`src/utils` (helpers), `backend/` (Python mixins: `operations_progress` → `file_ops` → `archives` → `file_management` →
-`properties` → `clipboard` → `game_manager` → `file_picker` → `lifecycle`, plus `drives`). No source file exceeds 400 lines.
-
-Archive extraction supports zip, tar (gz/bz2/xz/zst), single-file gz/bz2/xz/zst, and rar/7z/iso when `unrar` or `7z` is installed.
-
-## Tests
-
-```bash
-npm run test:backend   # Python (unittest): file ops, archives, clipboard, drives, games, lifecycle...
-npm run test           # Vitest + jsdom: utils, hooks, components, Steam hooks, page integration
-npm run test:coverage  # front-end coverage report
-npm run test:all       # both suites
-```
-
-The backend suite includes a real loop-device test (mount, rename, busy unmount); it is skipped automatically
-when `sudo -n`, `losetup` or `mkfs.ext4` are not available.
-
 ## Contributing
 * Bug reports, suggestions and contributions are welcome.
 * Some of these functions were initially implemented by [danielcamilo1](https://github.com/danielcamilo1/Decky-File-Manager).
 
 If you encounter a problem or have an idea for improving Decky File Manager, please open an issue or submit a pull request.
-
-> **Beta Notice:** Decky File Manager is currently in beta. The plugin is fully functional, but new features, performance improvements, and interface refinements are actively being developed, including:
-> - Integration with native options in steam that open a file manager on Gaming mode.
-> - Sudo operations.
-
 
 ## License
 
